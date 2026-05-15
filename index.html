@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="An interactive educational tool that converts Regular Expressions to NFA, DFA, and Minimized DFA with visual step-by-step demonstrations using Thompson's Construction and Subset Construction algorithms.">
+    <title>RegEx → Automata Converter | FLAT CS224 Project</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Patrick+Hand&family=Courier+Prime&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Notebook Spiral Binding -->
+    <div class="spiral-binding" id="spiral-binding"></div>
+
+    <!-- Red Margin Line -->
+    <div class="margin-line"></div>
+
+    <!-- Main Notebook Page -->
+    <div class="notebook-page" id="notebook-page">
+        <!-- Ruled Lines Background -->
+        <div class="ruled-lines" id="ruled-lines"></div>
+
+        <!-- Header / Title -->
+        <header class="notebook-header" id="header">
+            <h1 class="title">
+                <span class="title-main">RegEx → Automata</span>
+                <svg class="title-underline" viewBox="0 0 400 12" preserveAspectRatio="none">
+                    <path d="M0 8 Q50 2, 100 7 T200 5 T300 8 T400 4" stroke="#E57373" stroke-width="3" fill="none" stroke-linecap="round"/>
+                </svg>
+            </h1>
+            <p class="subtitle">Convert Regular Expressions into NFA, DFA & Minimized DFA</p>
+            <p class="subtitle-small">~ Thompson's Construction · Subset Construction · DFA Minimization ~</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="notebook-tabs" id="nav-tabs">
+            <button class="tab active" data-tab="input" id="tab-input">
+                <span class="tab-icon">✎</span> Input
+            </button>
+            <button class="tab" data-tab="nfa" id="tab-nfa">
+                <span class="tab-icon">◎</span> NFA
+            </button>
+            <button class="tab" data-tab="dfa" id="tab-dfa">
+                <span class="tab-icon">◉</span> DFA
+            </button>
+            <button class="tab" data-tab="min-dfa" id="tab-min-dfa">
+                <span class="tab-icon">⊙</span> Min DFA
+            </button>
+            <button class="tab" data-tab="test" id="tab-test">
+                <span class="tab-icon">✓</span> Test
+            </button>
+        </nav>
+
+        <!-- ============ INPUT SECTION ============ -->
+        <section class="content-section active" id="section-input">
+            <div class="section-title-wrapper">
+                <h2 class="section-title">Enter Your Regular Expression</h2>
+                <div class="doodle doodle-star">★</div>
+            </div>
+
+            <div class="input-group" id="regex-input-group">
+                <label class="input-label" for="regex-input">RegEx:</label>
+                <div class="notebook-input-wrapper">
+                    <input type="text" id="regex-input" class="notebook-input" 
+                           placeholder="e.g. (a|b)*abb" 
+                           spellcheck="false" autocomplete="off">
+                    <div class="input-line"></div>
+                </div>
+            </div>
+
+            <div class="syntax-help" id="syntax-help">
+                <h3 class="help-title">📖 Supported Syntax:</h3>
+                <ul class="help-list">
+                    <li><span class="syntax-symbol">a, b, c...</span> — Alphabet symbols</li>
+                    <li><span class="syntax-symbol">| or +</span> — Union (OR)</li>
+                    <li><span class="syntax-symbol">*</span> — Kleene Star (zero or more)</li>
+                    <li><span class="syntax-symbol">?</span> — Zero or one (optional)</li>
+                    <li><span class="syntax-symbol">( )</span> — Grouping</li>
+                    <li><span class="syntax-symbol">ab</span> — Concatenation (implicit)</li>
+                </ul>
+            </div>
+
+            <div class="button-group">
+                <button class="notebook-btn primary" id="btn-convert" onclick="convertRegex()">
+                    <span>▶ Convert!</span>
+                </button>
+                <button class="notebook-btn secondary" id="btn-clear" onclick="clearAll()">
+                    <span>✕ Clear</span>
+                </button>
+                <button class="notebook-btn secondary" id="btn-example" onclick="loadExample()">
+                    <span>📝 Example</span>
+                </button>
+            </div>
+
+            <div class="error-message" id="error-message"></div>
+
+            <!-- Doodle decorations -->
+            <div class="doodle doodle-arrow" style="bottom: 40px; right: 60px;">→</div>
+            <div class="doodle doodle-circle" style="bottom: 80px; right: 30px;">○</div>
+        </section>
+
+        <!-- ============ NFA SECTION ============ -->
+        <section class="content-section" id="section-nfa">
+            <div class="section-title-wrapper">
+                <h2 class="section-title">NFA (Thompson's Construction)</h2>
+                <div class="doodle doodle-star">✦</div>
+            </div>
+
+            <div class="regex-display" id="nfa-regex-display">
+                <span class="regex-label">RegEx:</span>
+                <span class="regex-value" id="nfa-regex-value"></span>
+            </div>
+
+            <div class="automata-canvas-wrapper">
+                <h3 class="canvas-title">State Diagram</h3>
+                <canvas id="nfa-canvas" width="900" height="500"></canvas>
+                <div class="canvas-controls">
+                    <button class="notebook-btn small" onclick="zoomIn('nfa')">🔍+</button>
+                    <button class="notebook-btn small" onclick="zoomOut('nfa')">🔍-</button>
+                    <button class="notebook-btn small" onclick="resetView('nfa')">↺</button>
+                </div>
+            </div>
+
+            <div class="transition-table-wrapper" id="nfa-table-wrapper">
+                <h3 class="table-title">Transition Table</h3>
+                <div class="table-scroll">
+                    <table class="notebook-table" id="nfa-transition-table">
+                        <thead><tr><th>State</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="step-info" id="nfa-steps">
+                <h3 class="steps-title">📝 Construction Steps:</h3>
+                <ol class="steps-list" id="nfa-steps-list"></ol>
+            </div>
+        </section>
+
+        <!-- ============ DFA SECTION ============ -->
+        <section class="content-section" id="section-dfa">
+            <div class="section-title-wrapper">
+                <h2 class="section-title">DFA (Subset Construction)</h2>
+                <div class="doodle doodle-star">✧</div>
+            </div>
+
+            <div class="regex-display" id="dfa-regex-display">
+                <span class="regex-label">RegEx:</span>
+                <span class="regex-value" id="dfa-regex-value"></span>
+            </div>
+
+            <div class="automata-canvas-wrapper">
+                <h3 class="canvas-title">State Diagram</h3>
+                <canvas id="dfa-canvas" width="900" height="500"></canvas>
+                <div class="canvas-controls">
+                    <button class="notebook-btn small" onclick="zoomIn('dfa')">🔍+</button>
+                    <button class="notebook-btn small" onclick="zoomOut('dfa')">🔍-</button>
+                    <button class="notebook-btn small" onclick="resetView('dfa')">↺</button>
+                </div>
+            </div>
+
+            <div class="transition-table-wrapper" id="dfa-table-wrapper">
+                <h3 class="table-title">Transition Table</h3>
+                <div class="table-scroll">
+                    <table class="notebook-table" id="dfa-transition-table">
+                        <thead><tr><th>State</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="step-info" id="dfa-steps">
+                <h3 class="steps-title">📝 Subset Construction Steps:</h3>
+                <ol class="steps-list" id="dfa-steps-list"></ol>
+            </div>
+        </section>
+
+        <!-- ============ MINIMIZED DFA SECTION ============ -->
+        <section class="content-section" id="section-min-dfa">
+            <div class="section-title-wrapper">
+                <h2 class="section-title">Minimized DFA</h2>
+                <div class="doodle doodle-star">✶</div>
+            </div>
+
+            <div class="regex-display" id="min-dfa-regex-display">
+                <span class="regex-label">RegEx:</span>
+                <span class="regex-value" id="min-dfa-regex-value"></span>
+            </div>
+
+            <div class="automata-canvas-wrapper">
+                <h3 class="canvas-title">State Diagram</h3>
+                <canvas id="min-dfa-canvas" width="900" height="500"></canvas>
+                <div class="canvas-controls">
+                    <button class="notebook-btn small" onclick="zoomIn('min-dfa')">🔍+</button>
+                    <button class="notebook-btn small" onclick="zoomOut('min-dfa')">🔍-</button>
+                    <button class="notebook-btn small" onclick="resetView('min-dfa')">↺</button>
+                </div>
+            </div>
+
+            <div class="transition-table-wrapper" id="min-dfa-table-wrapper">
+                <h3 class="table-title">Transition Table</h3>
+                <div class="table-scroll">
+                    <table class="notebook-table" id="min-dfa-transition-table">
+                        <thead><tr><th>State</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="step-info" id="min-dfa-steps">
+                <h3 class="steps-title">📝 Minimization Steps:</h3>
+                <ol class="steps-list" id="min-dfa-steps-list"></ol>
+            </div>
+        </section>
+
+        <!-- ============ TEST SECTION ============ -->
+        <section class="content-section" id="section-test">
+            <div class="section-title-wrapper">
+                <h2 class="section-title">String Testing</h2>
+                <div class="doodle doodle-star">✔</div>
+            </div>
+
+            <div class="regex-display" id="test-regex-display">
+                <span class="regex-label">Testing against RegEx:</span>
+                <span class="regex-value" id="test-regex-value"></span>
+            </div>
+
+            <div class="input-group" id="test-input-group">
+                <label class="input-label" for="test-input">Test String:</label>
+                <div class="notebook-input-wrapper">
+                    <input type="text" id="test-input" class="notebook-input" 
+                           placeholder="e.g. aabb" 
+                           spellcheck="false" autocomplete="off">
+                    <div class="input-line"></div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="notebook-btn primary" id="btn-test" onclick="testString()">
+                    <span>✓ Test String</span>
+                </button>
+                <button class="notebook-btn secondary" id="btn-clear-history" onclick="clearHistory()">
+                    <span>🗑 Clear History</span>
+                </button>
+            </div>
+
+            <div class="test-result" id="test-result"></div>
+
+            <div class="test-path" id="test-path">
+                <h3 class="path-title">State Traversal Path:</h3>
+                <div class="path-display" id="path-display"></div>
+            </div>
+
+            <div class="test-history" id="test-history">
+                <h3 class="history-title">📋 Test History:</h3>
+                <ul class="history-list" id="history-list"></ul>
+            </div>
+        </section>
+
+        <!-- Footer Doodles -->
+        <div class="page-number" id="page-number">Page 1</div>
+    </div>
+
+    <script src="regex-parser.js"></script>
+    <script src="thompson.js"></script>
+    <script src="subset-construction.js"></script>
+    <script src="dfa-minimizer.js"></script>
+    <script src="automata-renderer.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
